@@ -1,0 +1,9 @@
+# Supabase local config — ajuste project_id após `supabase link`
+
+project_id = "gestao-mw-publi"
+
+[api]
+enabled = true
+
+[db]
+major_version = 15

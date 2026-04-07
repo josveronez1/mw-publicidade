@@ -1,0 +1,11 @@
+---
+description: SFC Vue sem Supabase/Mapbox direto; script setup tipado
+globs: "**/*.vue"
+alwaysApply: false
+---
+
+# Camada de apresentação Vue
+
+- Use `<script setup lang="ts">`; `defineProps` / `defineEmits` tipados quando aplicável.
+- **Não** importe `@supabase/supabase-js` nem inicialize Mapbox dentro de `.vue`. Use composables (`usePublicPanels`, `useMapboxPublicMap`) ou stores.
+- Componentes em PascalCase; extrair lógica pesada para composables ou `src/domain/`.

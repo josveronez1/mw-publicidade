@@ -1,0 +1,12 @@
+---
+description: Supabase client, migrations, RLS; service role só no Edge
+globs: "src/infrastructure/**,src/services/**,supabase/**"
+alwaysApply: false
+---
+
+# Infraestrutura Supabase
+
+- Browser: apenas **anon key** + RLS. **Nunca** `service_role` no front.
+- Migrations em `supabase/migrations/`; ao alterar schema, atualizar `docs/database.md` e tipos em `database.types.ts` (ou regenerar).
+- Storage: buckets e políticas alinhados a entidades (PDFs, fotos de painel, criativos).
+- Mapbox: token via `import.meta.env.VITE_MAPBOX_TOKEN`.

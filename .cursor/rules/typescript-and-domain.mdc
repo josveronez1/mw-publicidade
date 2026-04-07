@@ -1,0 +1,11 @@
+---
+description: TypeScript estrito; regras no domain, não em SFC
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# TypeScript e domínio
+
+- Evite `any`. Tipar DTOs e respostas; preferir `src/infrastructure/database.types.ts` ou tipos gerados pelo CLI Supabase.
+- Regras de negócio (vagas, merge de template, semáforo) ficam em `src/domain/` com testes `*.spec.ts` colocados ao lado.
+- Não colocar regra de negócio complexa em arquivos `.vue`.

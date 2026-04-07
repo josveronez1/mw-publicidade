@@ -1,0 +1,16 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-mw-brand: #e7bb0e;
+  --color-mw-brand-hover: #d4a90c;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  @apply bg-white text-slate-900 antialiased;
+}
