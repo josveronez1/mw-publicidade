@@ -1,4 +1,4 @@
-# MW Mídia Indoor — Documentação
+# MW Publicidade — Documentação
 
 ## Visão geral
 
@@ -16,6 +16,7 @@
 ## Front-end
 
 - [Arquitetura e pastas](front-end.md)
+- [Geocodificação Nominatim (painéis)](geocoding.md)
 
 ## Glossário
 

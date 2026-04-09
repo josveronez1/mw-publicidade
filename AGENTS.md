@@ -4,7 +4,7 @@ Use este arquivo como **contexto fixo** ao trabalhar neste repositório. Complem
 
 ## Produto
 
-**MW Mídia Indoor** — gestão de painéis LED indoor, contratos, propostas (quotes), área cliente e **Media Kit** público (`/`).
+**MW Publicidade** — gestão de painéis LED indoor, contratos, propostas (quotes), área cliente e **Media Kit** público (`/`).
 
 ## Como rodar
 
@@ -60,5 +60,5 @@ Se insert/update falhar:
 | Tarefa | Ler primeiro |
 |--------|----------------|
 | Login / sessão / guards | `src/stores/auth.ts`, `src/router/index.ts` |
-| Painéis / quotes | `docs/database.md`, views em `presentation/views/` |
+| Painéis / quotes | `docs/database.md`, `docs/geocoding.md`, views em `presentation/views/` |
 | Mapa público | `useLeafletPublicMap.ts`, `MediaKitView.vue` |

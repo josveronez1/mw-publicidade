@@ -7,5 +7,5 @@ alwaysApply: false
 # Camada de apresentação Vue
 
 - Use `<script setup lang="ts">`; `defineProps` / `defineEmits` tipados quando aplicável.
-- **Não** importe `@supabase/supabase-js` nem inicialize Leaflet dentro de `.vue`. Use composables (`usePublicPanels`, `useLeafletPublicMap`) ou stores.
+- **Não** importe `@supabase/supabase-js` nem inicialize Leaflet dentro de `.vue`. Use composables (`usePublicPanels`, `useLeafletPublicMap`, `useAdminPanelMap`) ou stores.
 - Componentes em PascalCase; extrair lógica pesada para composables ou `src/domain/`.

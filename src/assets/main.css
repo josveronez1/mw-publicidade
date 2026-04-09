@@ -46,3 +46,17 @@ body {
 .mw-media-kit-map .leaflet-control-zoom a {
   color: #334155;
 }
+
+.admin-panel-map .leaflet-container {
+  height: 100%;
+  width: 100%;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+  background: #f1f5f9;
+}
+
+.admin-panel-map .leaflet-popup-content-wrapper {
+  border-radius: 0.5rem;
+}

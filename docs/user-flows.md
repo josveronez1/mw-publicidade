@@ -15,7 +15,8 @@
 ## Admin — painéis
 
 1. CRUD em `/admin/panels`; marcar **Publicar** para aparecer no Media Kit.
-2. Coordenadas no mapa; status operacional (ex.: manutenção → marcador acinzentado).
+2. **Endereço:** preencher logradouro, cidade e UF (CEP recomendado); o sistema geocodifica (Nominatim) e posiciona o pin no mapa; o operador confere e pode arrastar/clicar para ajustar. Coordenadas manuais ficam em “Avançado”.
+3. Status operacional no mapa público (ex.: manutenção → marcador acinzentado).
 
 ## Admin — contratos
 

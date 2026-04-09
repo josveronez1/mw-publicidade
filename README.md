@@ -1,4 +1,4 @@
-# MW Mídia Indoor — gestão
+# MW Publicidade — gestão
 
 Vue 3 + Vite + Tailwind + Pinia + Supabase + Leaflet (Media Kit, tiles Carto Positron — sem token). Ver [docs/index.md](docs/index.md).
 
@@ -17,6 +17,10 @@ npm run dev
 ```
 
 O mapa público usa tiles raster gratuitos (uso razoável; tráfego muito alto pode exigir tile server próprio).
+
+### Geocodificação (painéis no admin)
+
+O cadastro de painel usa **Nominatim** (OpenStreetMap) para posicionar o pin a partir do endereço — sem variável de ambiente. Respeite [a política de uso](https://operations.osmfoundation.org/policies/nominatim/) (requisições moderadas; User-Agent identificável no código). Detalhes em [docs/geocoding.md](docs/geocoding.md).
 
 ### Connection string (Postgres)
 

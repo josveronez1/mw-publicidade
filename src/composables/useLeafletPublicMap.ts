@@ -1,13 +1,8 @@
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { onUnmounted, ref, shallowRef, watch, type Ref } from 'vue'
+import { POSITRON_ATTRIBUTION, POSITRON_TILE_URL } from '@/infrastructure/leafletBasemap'
 import type { PublicPanelRow } from './usePublicPanels'
-
-const POSITRON_URL =
-  'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-const TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> ' +
-  '&copy; <a href="https://carto.com/attributions">CARTO</a>'
 
 function escapeHtml(s: string): string {
   return s
@@ -54,8 +49,8 @@ export function useLeafletPublicMap(
       attributionControl: true,
     })
 
-    L.tileLayer(POSITRON_URL, {
-      attribution: TILE_ATTRIBUTION,
+    L.tileLayer(POSITRON_TILE_URL, {
+      attribution: POSITRON_ATTRIBUTION,
       subdomains: 'abcd',
       maxZoom: 20,
     }).addTo(m)

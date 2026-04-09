@@ -1,4 +1,4 @@
-# Trackeamento de entrega — MW Mídia Indoor
+# Trackeamento de entrega — MW Publicidade
 
 Arquivo vivo: **atualize os status** ao concluir itens. Baseado em `docs/user-flows.md`, `docs/audit-and-roadmap.md` e no plano por fases do produto.
 
