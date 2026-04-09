@@ -2,7 +2,7 @@
 
 ## Visitante (Media Kit — `/`)
 
-1. Vê mapa (Mapbox) e lista de painéis **publicados**.
+1. Vê mapa (Leaflet + tiles Carto Positron) e lista de painéis **publicados**.
 2. Para cada painel: endereço, público-alvo, vagas ocupadas / total (`panel_slots_used_public`).
 3. Formulário “Solicitar proposta” (honeypot oculto + validação servidor via RLS).
 4. Rodapé com texto LGPD (checkbox opcional no roadmap jurídico).
@@ -15,7 +15,7 @@
 ## Admin — painéis
 
 1. CRUD em `/admin/panels`; marcar **Publicar** para aparecer no Media Kit.
-2. Coordenadas para Mapbox; status operacional (ex.: manutenção → marcador acinzentado no mapa).
+2. Coordenadas no mapa; status operacional (ex.: manutenção → marcador acinzentado).
 
 ## Admin — contratos
 

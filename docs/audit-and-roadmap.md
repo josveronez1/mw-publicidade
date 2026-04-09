@@ -6,7 +6,7 @@ Documento de alinhamento após feedback de instabilidade (login admin, salvament
 
 ## 1. Resumo executivo (franco)
 
-O repositório é um **scaffold avançado**: schema Supabase sólido (migrations, RLS, enums), rotas admin/cliente/público, telas Vue para CRUD parcial, Media Kit com Mapbox, documentação em `/docs`. Porém o **produto ainda não é “confiável para uso diário”** porque:
+O repositório é um **scaffold avançado**: schema Supabase sólido (migrations, RLS, enums), rotas admin/cliente/público, telas Vue para CRUD parcial, Media Kit com Leaflet (tiles públicos), documentação em `/docs`. Porém o **produto ainda não é “confiável para uso diário”** porque:
 
 1. **Operação** — `.env` errado (URL/anon key), migrations não aplicadas no projeto remoto, ou `profiles.role` sem `admin` geram falhas que parecem “bug da app”.
 2. **Front-end** — grande parte das mutações está **direto nas views** (`getSupabase()` + `insert/update`), sem camada única de erro/loading, sem testes de integração contra API real.
@@ -33,7 +33,7 @@ A sensação de “feito de qualquer jeito” vem sobretudo da **falta de uma ca
 |------|--------|------------|
 | Router + guards | Feito | `requiresAdmin` / `requiresClient`; `initialize()` antes dos guards |
 | Auth store | Feito + **fix** | Mutex em `initialize()` |
-| Media Kit `/` | Feito | Mapa Mapbox, lista painéis publicados, formulário quote |
+| Media Kit `/` | Feito | Mapa Leaflet, lista painéis publicados, formulário quote |
 | Admin | Parcial | Dashboard, painéis (lista + form), clientes, contratos, propostas, modelos, settings |
 | Cliente | Mínimo | Layout + home |
 | Login | Só entrada | Sem sign-up na UI; usuários via Dashboard Supabase ou futuro fluxo |
@@ -72,7 +72,7 @@ A sensação de “feito de qualquer jeito” vem sobretudo da **falta de uma ca
 | Sem camada `repositories/` ou `services/` | Testar sem mockar componente inteiro é penoso |
 | Sem tipos gerados `supabase gen types` | Erros de coluna só em runtime |
 | Sem fluxo de signup / recuperação de senha | Operação manual pelo Dashboard |
-| Mapbox no bundle principal | Peso grande; ideal lazy-load da rota `/` |
+| Bundle da home | Leaflet é leve; lazy-load da rota `/` segue opcional |
 | Pouca telemetria | Usuário não vê *por que* falhou (RLS vs rede vs validação) |
 
 ---
@@ -113,7 +113,7 @@ Checklist operacional recomendado (humano):
 ### Fase C — Qualidade
 
 1. Testes de contrato contra PostgREST mock ou projeto de staging.
-2. Lazy-load Mapbox.
+2. Lazy-load do chunk do mapa na rota `/` (opcional; Leaflet já reduz peso vs Mapbox).
 3. E2E (Playwright) para login + criar painel.
 
 ---

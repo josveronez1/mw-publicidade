@@ -10,13 +10,13 @@ alwaysApply: true
 - Vue 3 (Composition API + `<script setup>`), Vite, TypeScript, Pinia, Vue Router.
 - Tailwind CSS v4 (`@import "tailwindcss"` em `src/assets/main.css`).
 - Supabase: PostgreSQL, Auth, Storage, Edge Functions; **RLS** obrigatório.
-- Mapbox GL JS apenas via composables de infraestrutura / mapa; sem lógica de negócio dentro das chamadas à API Mapbox.
+- Leaflet apenas via composables de mapa público; sem lógica de negócio pesada nas chamadas de tile/marcadores.
 - Testes: **Vitest**; mocks na camada `infrastructure`.
 - Deploy: Vercel (front); Supabase (BaaS).
 
 ## Arquitetura limpa (front-end)
 
-- **`src/presentation/`**: views, layouts, componentes Vue puramente visuais; sem `@supabase/supabase-js` nem token Mapbox nos SFC.
+- **`src/presentation/`**: views, layouts, componentes Vue puramente visuais; sem `@supabase/supabase-js` nem inicializar Leaflet nos SFC.
 - **`src/domain/`**: funções puras e regras (slots, template, semáforo).
 - **`src/composables/`**: orquestração que pode chamar `getSupabase()` ou stores.
 - **`src/stores/`**: estado global (ex.: auth).

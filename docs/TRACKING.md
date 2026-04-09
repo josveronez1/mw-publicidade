@@ -22,7 +22,7 @@ Arquivo vivo: **atualize os status** ao concluir itens. Baseado em `docs/user-fl
 | OPS-01 | `.env` com `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` do **mesmo** projeto | ⬜      | Quem deploya confirma              |
 | OPS-02 | Migrations aplicadas no projeto Supabase (`db push` ou SQL)                    | ⬜      | `supabase/migrations/*.sql`        |
 | OPS-03 | Primeiro usuário admin (`profiles.role` = `admin` ou `super_admin`)            | ⬜      | Dashboard ou SQL                   |
-| OPS-04 | `VITE_MAPBOX_TOKEN` (opcional) para mapa no Media Kit                          | ⬜      | Sem token: lista + Google Maps     |
+| OPS-04 | Media Kit: mapa Leaflet (tiles públicos, sem variável de token)               | ✅      | Carto Positron + OSM attribution   |
 | OPS-05 | CI (Vitest/build) verde no repositório                                         | 🟨     | Validar `.github/workflows/ci.yml` |
 
 
@@ -65,7 +65,7 @@ Arquivo vivo: **atualize os status** ao concluir itens. Baseado em `docs/user-fl
 | ----- | ---------------------------------------------------- | ------ | --------------------------------------- |
 | F2-01 | Lista + criar/editar painel (`/admin/panels`)        | ✅      | `PanelFormView` com validações recentes |
 | F2-02 | Publicação `is_published` + leitura pública na lista | ✅      | `usePublicPanels`                       |
-| F2-03 | Mapa Mapbox + marcadores por status                  | ✅      | `useMapboxPublicMap`                    |
+| F2-03 | Mapa Leaflet + marcadores por status                 | ✅      | `useLeafletPublicMap`                   |
 | F2-04 | Layout responsivo do mapa (grid / resize)            | ✅      | Ajustes em `MediaKitView`               |
 | F2-05 | RPC `panel_slots_used_public` no Media Kit           | ✅      |                                         |
 | F2-06 | Upload de foto/thumbnail do painel (Storage + RLS)   | ⬜      | Campo existe no schema; UI não no form  |
@@ -151,7 +151,7 @@ Arquivo vivo: **atualize os status** ao concluir itens. Baseado em `docs/user-fl
 | ID   | Item                                                  | Status | Notas        |
 | ---- | ----------------------------------------------------- | ------ | ------------ |
 | C-01 | Testes de integração / contrato API (mock ou staging) | ⬜      |              |
-| C-02 | Lazy-load Mapbox na rota `/`                          | ⬜      | Reduz bundle |
+| C-02 | Lazy-load mapa na rota `/` (Leaflet já é leve)        | ⬜      | Opcional |
 | C-03 | E2E (ex.: Playwright): login + criar painel           | ⬜      |              |
 | C-04 | Monitoramento / logs estruturados (opcional Sentry)   | ⬜      |              |
 

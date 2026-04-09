@@ -10,7 +10,7 @@ Use este arquivo como **contexto fixo** ao trabalhar neste repositório. Complem
 
 ```bash
 npm install
-cp .env.example .env   # preencher VITE_SUPABASE_* (e opcionalmente VITE_MAPBOX_TOKEN)
+cp .env.example .env   # preencher VITE_SUPABASE_*
 npm run dev
 ```
 
@@ -20,7 +20,7 @@ Sempre **reinicie** o dev server após alterar variáveis `VITE_*`.
 
 | Caminho | Uso |
 |---------|-----|
-| `src/presentation/` | Views Vue, layouts — **evitar** lógica pesada e evitar importar Mapbox/Supabase direto nos SFC quando a regra `vue-presentation-layer` proíbe |
+| `src/presentation/` | Views Vue, layouts — **evitar** lógica pesada e evitar importar Leaflet/Supabase direto nos SFC quando a regra `vue-presentation-layer` proíbe |
 | `src/composables/` | Orquestração, dados públicos, mapa |
 | `src/stores/` | Pinia — **`auth`** é crítico |
 | `src/infrastructure/` | `supabaseClient.ts`, ports |
@@ -61,4 +61,4 @@ Se insert/update falhar:
 |--------|----------------|
 | Login / sessão / guards | `src/stores/auth.ts`, `src/router/index.ts` |
 | Painéis / quotes | `docs/database.md`, views em `presentation/views/` |
-| Mapa público | `useMapboxPublicMap.ts`, `MediaKitView.vue` |
+| Mapa público | `useLeafletPublicMap.ts`, `MediaKitView.vue` |

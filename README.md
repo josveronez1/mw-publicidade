@@ -1,22 +1,22 @@
 # MW Mídia Indoor — gestão
 
-Vue 3 + Vite + Tailwind + Pinia + Supabase + Mapbox. Ver [docs/index.md](docs/index.md).
+Vue 3 + Vite + Tailwind + Pinia + Supabase + Leaflet (Media Kit, tiles Carto Positron — sem token). Ver [docs/index.md](docs/index.md).
 
 ## Requisitos
 
 - Node 20+
 - Projeto Supabase (PostgreSQL + Auth)
-- Token Mapbox (mapa público)
 
 ## Setup
 
 ```bash
 cp .env.example .env
 # Edite .env: cole a anon key (Settings → API). A URL do projeto já vem preenchida no .env.example.
-# Opcional: VITE_MAPBOX_TOKEN para o mapa na home (sem ele, a lista + Google Maps + propostas funcionam).
 npm install
 npm run dev
 ```
+
+O mapa público usa tiles raster gratuitos (uso razoável; tráfego muito alto pode exigir tile server próprio).
 
 ### Connection string (Postgres)
 
