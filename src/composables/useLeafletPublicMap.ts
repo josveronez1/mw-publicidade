@@ -1,8 +1,28 @@
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { onUnmounted, ref, shallowRef, watch, type Ref } from 'vue'
-import { POSITRON_ATTRIBUTION, POSITRON_TILE_URL } from '@/infrastructure/leafletBasemap'
+import {
+  POSITRON_TILE_LAYER_OPTIONS,
+  POSITRON_TILE_URL,
+} from '@/infrastructure/leafletBasemap'
 import type { PublicPanelRow } from './usePublicPanels'
+
+/** Duração compartilhada flyTo / flyToBounds (segundos). */
+const MAP_FLY_DURATION_SEC = 0.85
+
+/** Zoom in ao selecionar painel: incremento e teto mais modestos (antes +3 até 18–20). */
+const PANEL_FOCUS_ZOOM_DELTA = 2
+const PANEL_FOCUS_ZOOM_FLOOR = 15
+const PANEL_FOCUS_ZOOM_CAP = 18
+
+/**
+ * Ao voltar à visão geral: fração do caminho até o zoom que encaixaria todos os pontos.
+ * Menor que 1 = menos zoom out de uma vez (pode ficar um ponto fora da tela se estiverem muito espalhados).
+ */
+const OVERVIEW_ZOOM_BLEND = 0.58
+
+/** Teto igual ao fitBounds anterior: não “cola” mais que isso nos pontos. */
+const OVERVIEW_MAX_ZOOM = 14
 
 function markerColor(status: string): string {
   if (status === 'maintenance') return '#94a3b8'
@@ -33,6 +53,7 @@ function popupElement(p: PublicPanelRow, onSelect?: (id: string) => void): HTMLE
     btn.textContent = 'Ver detalhes'
     btn.addEventListener('click', (ev) => {
       ev.preventDefault()
+      ev.stopPropagation()
       onSelect(p.id)
     })
     root.appendChild(btn)
@@ -44,8 +65,10 @@ function popupElement(p: PublicPanelRow, onSelect?: (id: string) => void): HTMLE
 export function useLeafletPublicMap(
   container: Ref<HTMLElement | null>,
   panels: Ref<PublicPanelRow[]>,
-  opts?: {
+  opts: {
+    selectedPanelId: Ref<string | null>
     onSelectPanel?: (panelId: string) => void
+    onMapBackgroundClick?: () => void
   },
 ) {
   const map = shallowRef<L.Map | null>(null)
@@ -60,6 +83,33 @@ export function useLeafletPublicMap(
     m.invalidateSize()
   }
 
+  function fitAllPanels() {
+    const m = map.value
+    if (!m || !ready.value || panels.value.length === 0) return
+    const b = L.latLngBounds(panels.value.map((p) => [p.latitude, p.longitude]))
+    // Mesmo padding [36,36] → getBoundsZoom usa TL+BR somados (72 em cada eixo).
+    const pad = L.point(72, 72)
+    const zFit = m.getBoundsZoom(b, false, pad)
+    const z0 = m.getZoom()
+    let z = Math.round(z0 + (zFit - z0) * OVERVIEW_ZOOM_BLEND)
+    z = Math.max(m.getMinZoom(), Math.min(m.getMaxZoom(), z))
+    z = Math.min(OVERVIEW_MAX_ZOOM, z)
+    m.flyTo(b.getCenter(), z, { duration: MAP_FLY_DURATION_SEC })
+  }
+
+  function flyToPanel(panelId: string) {
+    const m = map.value
+    if (!m || !ready.value) return
+    const p = panels.value.find((x) => x.id === panelId)
+    if (!p) return
+    const z = m.getZoom()
+    const targetZoom = Math.min(
+      PANEL_FOCUS_ZOOM_CAP,
+      Math.max(z + PANEL_FOCUS_ZOOM_DELTA, PANEL_FOCUS_ZOOM_FLOOR),
+    )
+    m.flyTo([p.latitude, p.longitude], targetZoom, { duration: MAP_FLY_DURATION_SEC })
+  }
+
   function init() {
     const el = container.value
     if (!el || map.value) return
@@ -69,11 +119,7 @@ export function useLeafletPublicMap(
       attributionControl: true,
     })
 
-    L.tileLayer(POSITRON_TILE_URL, {
-      attribution: POSITRON_ATTRIBUTION,
-      subdomains: 'abcd',
-      maxZoom: 20,
-    }).addTo(m)
+    L.tileLayer(POSITRON_TILE_URL, { ...POSITRON_TILE_LAYER_OPTIONS }).addTo(m)
 
     L.control.zoom({ position: 'topright' }).addTo(m)
 
@@ -82,6 +128,12 @@ export function useLeafletPublicMap(
     const group = L.layerGroup().addTo(m)
     markersLayer.value = group
     map.value = m
+
+    m.on('click', (e: L.LeafletMouseEvent) => {
+      const t = e.originalEvent.target as HTMLElement | null
+      if (t?.closest?.('.leaflet-popup')) return
+      opts.onMapBackgroundClick?.()
+    })
 
     m.whenReady(() => {
       ready.value = true
@@ -117,14 +169,14 @@ export function useLeafletPublicMap(
         iconAnchor: [8, 8],
       })
       const marker = L.marker([p.latitude, p.longitude], { icon }).addTo(group)
-      marker.on('click', () => {
-        opts?.onSelectPanel?.(p.id)
-        m.panTo([p.latitude, p.longitude], { animate: true, duration: 0.25 })
+      marker.on('click', (e: L.LeafletMouseEvent) => {
+        L.DomEvent.stopPropagation(e.originalEvent)
+        opts.onSelectPanel?.(p.id)
       })
-      marker.bindPopup(popupElement(p, opts?.onSelectPanel))
+      marker.bindPopup(popupElement(p, opts.onSelectPanel))
     }
 
-    if (panels.value.length > 0) {
+    if (panels.value.length > 0 && opts.selectedPanelId.value == null) {
       const b = L.latLngBounds(panels.value.map((p) => [p.latitude, p.longitude]))
       m.fitBounds(b, { padding: [48, 48], maxZoom: 14 })
     }
@@ -145,5 +197,5 @@ export function useLeafletPublicMap(
     ready.value = false
   })
 
-  return { map, ready, init, syncMarkers }
+  return { map, ready, init, syncMarkers, flyToPanel, fitAllPanels }
 }

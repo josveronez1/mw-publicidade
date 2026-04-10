@@ -1,7 +1,7 @@
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { onUnmounted, ref, shallowRef, watch, type Ref } from 'vue'
-import { POSITRON_ATTRIBUTION, POSITRON_TILE_URL } from '@/infrastructure/leafletBasemap'
+import { POSITRON_TILE_LAYER_OPTIONS, POSITRON_TILE_URL } from '@/infrastructure/leafletBasemap'
 
 const DEFAULT_CENTER: L.LatLngTuple = [-22.5, -47.0]
 const DEFAULT_ZOOM = 6
@@ -77,11 +77,7 @@ export function useAdminPanelMap(
       attributionControl: true,
     })
 
-    L.tileLayer(POSITRON_TILE_URL, {
-      attribution: POSITRON_ATTRIBUTION,
-      subdomains: 'abcd',
-      maxZoom: 20,
-    }).addTo(m)
+    L.tileLayer(POSITRON_TILE_URL, { ...POSITRON_TILE_LAYER_OPTIONS }).addTo(m)
 
     L.control.zoom({ position: 'topright' }).addTo(m)
 

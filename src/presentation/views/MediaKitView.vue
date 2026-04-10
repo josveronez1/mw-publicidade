@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { usePublicPanels } from '@/composables/usePublicPanels'
 import { useSiteSettings } from '@/composables/useSiteSettings'
@@ -16,21 +16,106 @@ const selectedPanel = computed(() =>
   selectedPanelId.value ? panels.value.find((p) => p.id === selectedPanelId.value) ?? null : null,
 )
 
-function selectPanel(p: { id: string }) {
-  selectedPanelId.value = p.id
+const lightboxIndex = ref<number | null>(null)
+
+const lightboxUrl = computed(() => {
+  const i = lightboxIndex.value
+  const list = mediaUrls.value
+  if (i == null || i < 0 || i >= list.length) return null
+  return list[i] ?? null
+})
+
+function closeLightbox() {
+  lightboxIndex.value = null
+}
+
+function openLightbox(url: string) {
+  const i = mediaUrls.value.indexOf(url)
+  if (i >= 0) lightboxIndex.value = i
+}
+
+function lightboxPrev() {
+  const i = lightboxIndex.value
+  if (i == null || i <= 0) return
+  lightboxIndex.value = i - 1
+}
+
+function lightboxNext() {
+  const i = lightboxIndex.value
+  const n = mediaUrls.value.length
+  if (i == null || i >= n - 1) return
+  lightboxIndex.value = i + 1
+}
+
+const lightboxHasPrev = computed(
+  () => lightboxIndex.value != null && lightboxIndex.value > 0,
+)
+const lightboxHasNext = computed(() => {
+  const i = lightboxIndex.value
+  const n = mediaUrls.value.length
+  return i != null && i < n - 1
+})
+
+let lightboxTouchStartX = 0
+function onLightboxTouchStart(e: TouchEvent) {
+  lightboxTouchStartX = e.changedTouches[0]?.clientX ?? 0
+}
+function onLightboxTouchEnd(e: TouchEvent) {
+  if (mediaUrls.value.length < 2) return
+  const x = e.changedTouches[0]?.clientX ?? 0
+  const d = x - lightboxTouchStartX
+  if (Math.abs(d) < 56) return
+  if (d > 0) lightboxPrev()
+  else lightboxNext()
+}
+
+/** Clique na coluna de detalhes (aside): só fecha o lightbox, mantém o ponto selecionado. */
+function onAsideClick() {
+  if (lightboxUrl.value) closeLightbox()
+}
+
+function onGlobalKeydown(ev: KeyboardEvent) {
+  if (lightboxUrl.value == null) return
+  if (ev.key === 'Escape') {
+    closeLightbox()
+    return
+  }
+  if (mediaUrls.value.length < 2) return
+  if (ev.key === 'ArrowLeft') {
+    ev.preventDefault()
+    lightboxPrev()
+  } else if (ev.key === 'ArrowRight') {
+    ev.preventDefault()
+    lightboxNext()
+  }
+}
+
+function focusPanelOnMap(id: string) {
+  selectedPanelId.value = id
   nextTick(() => {
     asideEl.value?.scrollTo({ top: 0, behavior: 'smooth' })
+    mapCtrl.flyToPanel(id)
   })
 }
 
 function clearSelection() {
+  lightboxIndex.value = null
   selectedPanelId.value = null
   quoteMsg.value = null
+  nextTick(() => mapCtrl.fitAllPanels())
 }
 
-const { init } = useLeafletPublicMap(mapEl, panels, {
-  onSelectPanel: (id) => selectPanel({ id }),
+const mapCtrl = useLeafletPublicMap(mapEl, panels, {
+  selectedPanelId,
+  onSelectPanel: focusPanelOnMap,
+  onMapBackgroundClick: clearSelection,
 })
+
+const { init } = mapCtrl
+
+function selectPanel(p: { id: string }) {
+  focusPanelOnMap(p.id)
+}
 
 const quote = ref({
   name: '',
@@ -51,6 +136,7 @@ function mapsLink(p: { latitude: number; longitude: number }) {
 }
 
 onMounted(async () => {
+  window.addEventListener('keydown', onGlobalKeydown)
   await loadSettings()
   await nextTick()
   // Mapa antes do load() dos painéis — marcadores atualizam quando `panels` chega.
@@ -58,9 +144,14 @@ onMounted(async () => {
   await load()
 })
 
+onUnmounted(() => {
+  window.removeEventListener('keydown', onGlobalKeydown)
+})
+
 watch(
   () => selectedPanel.value?.id,
   async () => {
+    closeLightbox()
     mediaUrls.value = []
     const p = selectedPanel.value
     const paths = (p?.gallery_paths ?? []).filter(Boolean)
@@ -165,17 +256,84 @@ async function submitQuote() {
       class="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-[minmax(0,1fr)]"
     >
       <div
-        class="relative z-0 flex min-h-[420px] flex-col border-b border-slate-200 lg:min-h-0 lg:h-full lg:border-b-0 lg:border-r"
+        class="relative isolate flex min-h-[420px] flex-col border-b border-slate-200 lg:min-h-0 lg:h-full lg:border-b-0 lg:border-r"
       >
         <div
           ref="mapEl"
-          class="mw-media-kit-map h-[min(420px,50svh)] w-full min-h-[240px] lg:h-full lg:min-h-0"
+          class="mw-media-kit-map relative z-0 h-[min(420px,50svh)] w-full min-h-[240px] lg:h-full lg:min-h-0"
         />
+        <!-- Lightbox centralizado na área do mapa; navegação ←/→ e deslize -->
+        <div
+          v-if="lightboxUrl"
+          class="absolute inset-0 z-[8000] flex items-center justify-center bg-slate-900/50 p-3 backdrop-blur-[2px] sm:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Galeria de fotos do ponto"
+          @click.self="clearSelection"
+        >
+          <div
+            class="flex w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+            @click.stop
+          >
+            <div class="relative p-2 sm:p-3">
+              <button
+                type="button"
+                class="absolute right-3 top-3 z-20 flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-xl font-semibold leading-none text-slate-600 shadow-sm hover:bg-slate-50 sm:right-4 sm:top-4"
+                aria-label="Fechar"
+                @click.stop="closeLightbox"
+              >
+                ×
+              </button>
+              <!-- Quadro fixo: imagem preenche com crop (object-cover), sem “cantos vazios” -->
+              <div
+                class="relative mx-auto aspect-[16/10] w-full max-h-[min(72vh,640px)] max-w-full overflow-hidden bg-slate-900 sm:max-h-[min(76vh,680px)]"
+                @touchstart.passive="onLightboxTouchStart"
+                @touchend="onLightboxTouchEnd"
+              >
+                <img
+                  :src="lightboxUrl"
+                  alt=""
+                  class="h-full w-full object-cover object-center select-none"
+                  draggable="false"
+                />
+                <template v-if="mediaUrls.length > 1">
+                  <button
+                    type="button"
+                    class="absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-slate-900/55 text-lg font-bold text-white shadow-md backdrop-blur-sm transition hover:bg-slate-900/75 disabled:pointer-events-none disabled:opacity-25 sm:left-3 sm:h-12 sm:w-12"
+                    aria-label="Foto anterior"
+                    :disabled="!lightboxHasPrev"
+                    @click.stop="lightboxPrev"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    class="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-slate-900/55 text-lg font-bold text-white shadow-md backdrop-blur-sm transition hover:bg-slate-900/75 disabled:pointer-events-none disabled:opacity-25 sm:right-3 sm:h-12 sm:w-12"
+                    aria-label="Próxima foto"
+                    :disabled="!lightboxHasNext"
+                    @click.stop="lightboxNext"
+                  >
+                    ›
+                  </button>
+                </template>
+              </div>
+              <p
+                v-if="mediaUrls.length > 1 && lightboxIndex != null"
+                class="mt-2 text-center text-xs text-slate-500"
+              >
+                {{ lightboxIndex + 1 }} / {{ mediaUrls.length }}
+                <span class="text-slate-400"> · ← → </span>
+                <span class="hidden sm:inline text-slate-400"> · deslize no celular</span>
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <aside
         ref="asideEl"
         class="border-t border-slate-200 lg:min-h-0 lg:overflow-y-auto lg:border-l lg:border-t-0"
+        @click="onAsideClick"
       >
         <div v-if="!selectedPanel" class="p-4">
           <h2 class="text-sm font-semibold text-slate-900">Pontos publicados</h2>
@@ -186,7 +344,7 @@ async function submitQuote() {
               <button
                 type="button"
                 class="w-full rounded-lg border border-slate-200 p-3 text-left text-sm hover:border-slate-300 hover:bg-slate-50"
-                @click="selectPanel(p)"
+                @click.stop="selectPanel(p)"
               >
                 <p class="font-medium text-slate-900">{{ p.name }}</p>
                 <p class="text-slate-600">{{ p.address_line1 }}, {{ p.city }} / {{ p.state }}</p>
@@ -217,7 +375,7 @@ async function submitQuote() {
             <button
               type="button"
               class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-              @click="clearSelection"
+              @click.stop="clearSelection"
             >
               Voltar
             </button>
@@ -236,13 +394,21 @@ async function submitQuote() {
                 Sem fotos disponíveis.
               </div>
               <div v-else class="flex snap-x snap-mandatory gap-2 overflow-x-auto p-3">
-                <img
-                  v-for="u in mediaUrls"
+                <button
+                  v-for="(u, idx) in mediaUrls"
                   :key="u"
-                  :src="u"
-                  alt=""
-                  class="h-40 w-auto shrink-0 snap-start rounded-lg object-cover"
-                />
+                  type="button"
+                  class="shrink-0 snap-start overflow-hidden rounded-lg border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#e7bb0e]"
+                  :class="
+                    lightboxIndex === idx
+                      ? 'border-[#e7bb0e] ring-2 ring-[#e7bb0e]/40'
+                      : 'border-transparent hover:border-slate-300'
+                  "
+                  :aria-label="`Abrir foto ${idx + 1} em tamanho grande`"
+                  @click.stop="openLightbox(u)"
+                >
+                  <img :src="u" alt="" class="h-40 w-auto max-w-[200px] object-cover" />
+                </button>
               </div>
             </div>
 
