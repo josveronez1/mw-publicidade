@@ -1,13 +1,21 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import { usePublicPanels } from '@/composables/usePublicPanels'
-import { useSiteSettings } from '@/composables/useSiteSettings'
 import { useLeafletPublicMap } from '@/composables/useLeafletPublicMap'
 import { createPanelMediaSignedUrl } from '@/infrastructure/storage/panelMedia'
 
 const { panels, slotsByPanel, loading, error, load } = usePublicPanels()
-const { orgName, load: loadSettings } = useSiteSettings()
+const auth = useAuthStore()
+
+const adminEntry = computed(() =>
+  auth.isAdmin ? { to: '/admin/panels' as const, label: 'Painel' } : { to: '/login' as const, label: 'Área restrita' },
+)
+
+/** Nome fixo no cabeçalho público (produto só MW). */
+const orgDisplayName = 'MW Publicidade'
+
 const mapEl = ref<HTMLElement | null>(null)
 const asideEl = ref<HTMLElement | null>(null)
 
@@ -137,7 +145,6 @@ function mapsLink(p: { latitude: number; longitude: number }) {
 
 onMounted(async () => {
   window.addEventListener('keydown', onGlobalKeydown)
-  await loadSettings()
   await nextTick()
   // Mapa antes do load() dos painéis — marcadores atualizam quando `panels` chega.
   init()
@@ -240,14 +247,14 @@ async function submitQuote() {
           alt=""
           class="h-10 w-10 rounded-xl object-cover"
         />
-        <span class="font-semibold text-slate-900">{{ orgName }}</span>
+        <span class="font-semibold text-slate-900">{{ orgDisplayName }}</span>
       </RouterLink>
       <div class="flex gap-4 text-sm">
         <RouterLink
-          to="/login"
+          :to="adminEntry.to"
           class="font-medium text-slate-600 hover:text-slate-900"
         >
-          Área restrita
+          {{ adminEntry.label }}
         </RouterLink>
       </div>
     </header>
