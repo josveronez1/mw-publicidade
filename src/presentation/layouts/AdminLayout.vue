@@ -1,10 +1,17 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useAdminQuoteInboxMeta } from '@/composables/useAdminQuoteInboxMeta'
 
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
+const { unreadCount, refreshUnread } = useAdminQuoteInboxMeta()
+
+onMounted(() => {
+  void refreshUnread()
+})
 
 async function signOutAndGoHome() {
   try {
@@ -15,9 +22,20 @@ async function signOutAndGoHome() {
 }
 
 /** Itens ativos no menu. Para preview, contratos/propostas/modelos e o dashboard ficam fora. */
-const links = [
+const links: Array<{
+  to: string
+  label: string
+  match: (p: string) => boolean
+  inboxBadge?: boolean
+}> = [
   { to: '/admin/panels', label: 'Painéis', match: (p: string) => p.startsWith('/admin/panels') },
   { to: '/admin/clients', label: 'Clientes', match: (p: string) => p.startsWith('/admin/clients') },
+  {
+    to: '/admin/solicitacoes',
+    label: 'Solicitações',
+    match: (p: string) => p.startsWith('/admin/solicitacoes'),
+    inboxBadge: true,
+  },
   // { to: '/admin', label: 'Início', match: (p: string) => p === '/admin' || p === '/admin/' },
   // { to: '/admin/contracts', label: 'Contratos', match: (p: string) => p.startsWith('/admin/contracts') },
   // { to: '/admin/quotes', label: 'Propostas', match: (p: string) => p.startsWith('/admin/quotes') },
@@ -54,7 +72,16 @@ function activeClass(l: (typeof links)[0]) {
           class="block rounded-lg px-3 py-2 text-sm font-medium transition-colors"
           :class="activeClass(l)"
         >
-          {{ l.label }}
+          <span class="flex items-center justify-between gap-2">
+            <span>{{ l.label }}</span>
+            <span
+              v-if="l.inboxBadge && unreadCount > 0"
+              class="inline-flex min-w-[1.25rem] shrink-0 items-center justify-center rounded-full bg-amber-500 px-1.5 py-0.5 text-center text-[10px] font-bold leading-none text-white"
+              :title="`${unreadCount} não ${unreadCount === 1 ? 'lida' : 'lidas'}`"
+            >
+              {{ unreadCount > 99 ? '99+' : unreadCount }}
+            </span>
+          </span>
         </RouterLink>
       </nav>
       <div class="border-t border-slate-200 p-3">

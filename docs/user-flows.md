@@ -12,6 +12,11 @@
 1. `/login` → e-mail/senha (Supabase Auth).
 2. Perfil com `role` in (`admin`, `super_admin`) acessa `/admin` e sidebar.
 
+## Admin — solicitações (Media Kit)
+
+1. `/admin/solicitacoes` — lista de `quote_requests` enviados pelo formulário do Media Kit (nome, e-mail, telefone, empresa, mensagem, painéis de interesse).
+2. Itens ainda **não abertos** (`read_at` nulo) aparecem com destaque e contam para o indicador do menu; ao expandir a linha, o admin grava `read_at` e o item deixa de ser “novo”.
+
 ## Admin — painéis
 
 1. CRUD em `/admin/panels`; marcar **Publicar** para aparecer no Media Kit.
