@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getSupabase } from '@/infrastructure/supabaseClient'
+import { runPostgrestWithRetry } from '@/composables/retryRequest'
 
 type Row = {
   id: string
@@ -13,6 +14,7 @@ type Row = {
 
 const rows = ref<Row[]>([])
 const err = ref<string | null>(null)
+const loading = ref(false)
 
 /** `public.client_status` */
 const CLIENT_STATUS_LABEL: Record<string, string> = {
@@ -26,14 +28,33 @@ function statusLabel(s: string) {
   return CLIENT_STATUS_LABEL[s] ?? s
 }
 
-onMounted(async () => {
-  const sb = getSupabase()
-  const { data, error } = await sb
-    .from('clients')
-    .select('id, legal_name, trade_name, document_number, status')
-    .order('legal_name')
-  err.value = error?.message ?? null
-  rows.value = (data ?? []) as Row[]
+async function loadRows() {
+  err.value = null
+  loading.value = true
+  try {
+    const sb = getSupabase()
+    const { data, error } = await runPostgrestWithRetry(() =>
+      sb
+        .from('clients')
+        .select('id, legal_name, trade_name, document_number, status')
+        .order('legal_name'),
+    )
+    if (error) {
+      err.value = error.message
+      rows.value = []
+    } else {
+      rows.value = (data ?? []) as Row[]
+    }
+  } catch (e) {
+    err.value = e instanceof Error ? e.message : 'Falha ao carregar a lista.'
+    rows.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  void loadRows()
 })
 </script>
 
@@ -70,9 +91,23 @@ onMounted(async () => {
         Novo cliente
       </RouterLink>
     </div>
-    <p v-if="err" class="mt-2 text-sm text-red-600">{{ err }}</p>
+    <div v-if="err" class="mt-2 flex flex-wrap items-center gap-2">
+      <p class="text-sm text-red-600">{{ err }}</p>
+      <button
+        type="button"
+        class="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-sm font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-50"
+        :disabled="loading"
+        @click="loadRows"
+      >
+        Tentar novamente
+      </button>
+    </div>
+    <p v-else-if="loading" class="mt-2 text-sm text-slate-500">Carregando…</p>
 
-    <div class="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <div
+      v-else
+      class="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white"
+    >
       <div
         class="hidden border-b border-slate-200 bg-slate-50 text-xs font-medium text-slate-600 sm:flex sm:items-stretch"
       >

@@ -10,8 +10,15 @@ const { panels, slotsByPanel, loading, error, load } = usePublicPanels()
 const auth = useAuthStore()
 
 const adminEntry = computed(() =>
-  auth.isAdmin ? { to: '/admin/panels' as const, label: 'Painel' } : { to: '/login' as const, label: 'Área restrita' },
+  auth.isAdmin ? { to: '/admin/panels' as const, label: 'Admin' } : { to: '/login' as const, label: 'Área restrita' },
 )
+
+/** Alinhado a `useLeafletPublicMap` — mesma lógica de cor dos pontos do mapa. */
+function publishedPanelPinColor(status: string) {
+  if (status === 'maintenance') return '#94a3b8'
+  if (status === 'inactive' || status === 'planning') return '#cbd5e1'
+  return '#e7bb0e'
+}
 
 /** Nome fixo no cabeçalho público (produto só MW). */
 const orgDisplayName = 'MW Publicidade'
@@ -345,26 +352,55 @@ async function submitQuote() {
         <div v-if="!selectedPanel" class="p-4">
           <h2 class="text-sm font-semibold text-slate-900">Pontos publicados</h2>
           <p v-if="loading" class="mt-2 text-sm text-slate-500">Carregando…</p>
-          <p v-else-if="error" class="mt-2 text-sm text-red-600">{{ error }}</p>
+          <div v-else-if="error" class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <p class="text-sm text-red-600">{{ error }}</p>
+            <button
+              type="button"
+              class="shrink-0 self-start rounded-md border border-slate-300 bg-white px-2.5 py-1 text-sm font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-50 sm:self-auto"
+              :disabled="loading"
+              @click="load"
+            >
+              Tentar novamente
+            </button>
+          </div>
           <ul v-else class="mt-3 space-y-3">
             <li v-for="p in panels" :key="p.id">
               <button
                 type="button"
-                class="w-full rounded-lg border border-slate-200 p-3 text-left text-sm hover:border-slate-300 hover:bg-slate-50"
+                class="flex w-full gap-3 rounded-lg border border-slate-200 p-3 text-left text-sm hover:border-slate-300 hover:bg-slate-50"
                 @click.stop="selectPanel(p)"
               >
-                <p class="font-medium text-slate-900">{{ p.name }}</p>
-                <p class="text-slate-600">{{ p.address_line1 }}, {{ p.city }} / {{ p.state }}</p>
-                <p v-if="p.target_audience" class="mt-1 text-slate-500">
-                  Público: {{ p.target_audience }}
-                </p>
-                <p class="mt-1 text-xs text-slate-500">
-                  Vagas ocupadas:
-                  <span class="font-semibold text-slate-800">{{
-                    slotsByPanel[p.id] ?? 0
-                  }}</span>
-                  / {{ p.total_ad_slots }}
-                </p>
+                <div
+                  class="flex h-10 w-10 shrink-0 items-center justify-center self-start rounded-lg border border-slate-200/80 bg-slate-50/90"
+                  aria-hidden="true"
+                >
+                  <svg
+                    class="h-6 w-6 drop-shadow-sm"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+                      :fill="publishedPanelPinColor(p.status)"
+                    />
+                    <circle cx="12" cy="9" r="2.25" fill="white" />
+                  </svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="font-medium text-slate-900">{{ p.name }}</p>
+                  <p class="text-slate-600">{{ p.address_line1 }}, {{ p.city }} / {{ p.state }}</p>
+                  <p v-if="p.target_audience" class="mt-1 text-slate-500">
+                    Público: {{ p.target_audience }}
+                  </p>
+                  <p class="mt-1 text-xs text-slate-500">
+                    Vagas ocupadas:
+                    <span class="font-semibold text-slate-800">{{
+                      slotsByPanel[p.id] ?? 0
+                    }}</span>
+                    / {{ p.total_ad_slots }}
+                  </p>
+                </div>
               </button>
             </li>
           </ul>
