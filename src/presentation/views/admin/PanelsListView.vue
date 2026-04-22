@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getSupabase } from '@/infrastructure/supabaseClient'
 import { requestErrorMessage, runPostgrestWithRetry } from '@/composables/retryRequest'
+import { useRefetchWhenTabVisible } from '@/composables/useRefetchWhenTabVisible'
 
 type Row = {
   id: string
@@ -29,9 +30,12 @@ function statusLabel(status: string) {
   return PANEL_STATUS_LABEL[status] ?? status
 }
 
-async function loadRows() {
-  err.value = null
-  loading.value = true
+async function loadRows(opts?: { silent?: boolean }) {
+  const silent = opts?.silent === true
+  if (!silent) {
+    err.value = null
+    loading.value = true
+  }
   try {
     const sb = getSupabase()
     const { data, error } = await runPostgrestWithRetry(() =>
@@ -39,21 +43,23 @@ async function loadRows() {
     )
     if (error) {
       err.value = error.message
-      rows.value = []
+      if (!silent) rows.value = []
     } else {
+      err.value = null
       rows.value = (data ?? []) as Row[]
     }
   } catch (e) {
     err.value = requestErrorMessage(e)
-    rows.value = []
+    if (!silent) rows.value = []
   } finally {
-    loading.value = false
+    if (!silent) loading.value = false
   }
 }
 
 onMounted(() => {
   void loadRows()
 })
+useRefetchWhenTabVisible(() => loadRows({ silent: true }))
 </script>
 
 <template>
@@ -102,7 +108,7 @@ onMounted(() => {
         type="button"
         class="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-sm font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-50"
         :disabled="loading"
-        @click="loadRows"
+        @click="() => void loadRows()"
       >
         Tentar novamente
       </button>

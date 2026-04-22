@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAdminQuoteInboxMeta } from '@/composables/useAdminQuoteInboxMeta'
+import { useRefetchWhenTabVisible } from '@/composables/useRefetchWhenTabVisible'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -12,6 +13,7 @@ const { unreadCount, refreshUnread } = useAdminQuoteInboxMeta()
 onMounted(() => {
   void refreshUnread()
 })
+useRefetchWhenTabVisible(refreshUnread)
 
 async function signOutAndGoHome() {
   try {

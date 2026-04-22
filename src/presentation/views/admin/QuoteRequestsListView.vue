@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { getSupabase } from '@/infrastructure/supabaseClient'
 import { requestErrorMessage, runPostgrestWithRetry } from '@/composables/retryRequest'
+import { useRefetchWhenTabVisible } from '@/composables/useRefetchWhenTabVisible'
 import { useAdminQuoteInboxMeta } from '@/composables/useAdminQuoteInboxMeta'
 
 type Row = {
@@ -72,10 +73,13 @@ function isMissingReadAtError(msg: string) {
   )
 }
 
-async function loadRows() {
-  err.value = null
-  loading.value = true
-  panelNameById.value = new Map()
+async function loadRows(opts?: { silent?: boolean }) {
+  const silent = opts?.silent === true
+  if (!silent) {
+    err.value = null
+    loading.value = true
+    panelNameById.value = new Map()
+  }
   try {
     const sb = getSupabase()
     const { data, error } = await runPostgrestWithRetry(() =>
@@ -88,15 +92,16 @@ async function loadRows() {
       err.value = isMissingReadAtError(error.message)
         ? `${error.message} — Aplique a migration com read_at em quote_requests (supabase db push) e aguarde o schema recarregar.`
         : error.message
-      rows.value = []
+      if (!silent) rows.value = []
       return
     }
+    err.value = null
     rows.value = (data ?? []) as Row[]
   } catch (e) {
     err.value = requestErrorMessage(e)
-    rows.value = []
+    if (!silent) rows.value = []
   } finally {
-    loading.value = false
+    if (!silent) loading.value = false
   }
 
   // Resolução de nomes de painéis: não bloqueia o “Carregando” se esta query pendurar.
@@ -112,6 +117,8 @@ async function loadRows() {
         for (const p of pData as { id: string; name: string }[]) m.set(p.id, p.name)
         panelNameById.value = m
       }
+    } else {
+      panelNameById.value = new Map()
     }
   } catch {
     /* nomes de painel são opcionais */
@@ -145,6 +152,7 @@ async function onToggleRow(r: Row) {
 onMounted(() => {
   void loadRows()
 })
+useRefetchWhenTabVisible(() => loadRows({ silent: true }))
 </script>
 
 <template>
@@ -184,7 +192,7 @@ onMounted(() => {
         type="button"
         class="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-sm font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-50"
         :disabled="loading"
-        @click="loadRows"
+        @click="() => void loadRows()"
       >
         Tentar novamente
       </button>

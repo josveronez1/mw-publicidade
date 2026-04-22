@@ -65,6 +65,7 @@ Se insert/update falhar:
 
 | Tarefa | Ler primeiro |
 |--------|----------------|
+| Bugs difíceis / causa raiz vs remendos | `docs/root-cause-debugging.md` |
 | Login / sessão / guards | `src/stores/auth.ts`, `src/router/index.ts` |
 | Painéis / quotes / clientes | `docs/database.md`, `docs/user-flows.md`, `docs/geocoding.md`, ficha cliente em `presentation/views/admin/ClientHubView.vue` |
 | Mapa público | `useLeafletPublicMap.ts`, `MediaKitView.vue` |

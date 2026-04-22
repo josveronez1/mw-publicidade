@@ -32,10 +32,13 @@ export function usePublicPanels() {
   /** Evita que uma carga lenta sobrescreva o resultado de uma carga mais recente. */
   let loadSeq = 0
 
-  async function load() {
+  async function load(opts?: { silent?: boolean }) {
+    const silent = opts?.silent === true
     const seq = ++loadSeq
-    loading.value = true
-    error.value = null
+    if (!silent) {
+      loading.value = true
+      error.value = null
+    }
     const sb = getSupabase()
     try {
       const { data, error: e } = await runPostgrestWithRetry(() =>
@@ -50,11 +53,14 @@ export function usePublicPanels() {
       if (seq !== loadSeq) return
       if (e) {
         error.value = e.message
-        panels.value = []
-        slotsByPanel.value = {}
+        if (!silent) {
+          panels.value = []
+          slotsByPanel.value = {}
+        }
         return
       }
       panels.value = (data ?? []) as PublicPanelRow[]
+      error.value = null
       if (panels.value.length === 0) {
         slotsByPanel.value = {}
         return
@@ -83,10 +89,12 @@ export function usePublicPanels() {
       if (seq !== loadSeq) return
       const msg = err instanceof Error ? err.message : 'Falha ao carregar painéis.'
       error.value = msg
-      panels.value = []
-      slotsByPanel.value = {}
+      if (!silent) {
+        panels.value = []
+        slotsByPanel.value = {}
+      }
     } finally {
-      if (seq === loadSeq) loading.value = false
+      if (seq === loadSeq && !silent) loading.value = false
     }
   }
 

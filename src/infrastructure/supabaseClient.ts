@@ -98,3 +98,8 @@ export function getSupabase(): SupabaseClient {
   if (!singleton) singleton = createSupabaseBrowserClient()
   return singleton
 }
+
+/** Descarta o singleton (útil para `auth.recoverFromBackgroundTab` em situação excepcional). */
+export function resetSupabaseBrowserClient(): void {
+  singleton = null
+}

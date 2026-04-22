@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { usePublicPanels } from '@/composables/usePublicPanels'
+import { useRefetchWhenTabVisible } from '@/composables/useRefetchWhenTabVisible'
 import { useLeafletPublicMap } from '@/composables/useLeafletPublicMap'
 import { createPanelMediaSignedUrl } from '@/infrastructure/storage/panelMedia'
 
@@ -157,6 +158,8 @@ onMounted(async () => {
   init()
   await load()
 })
+
+useRefetchWhenTabVisible(() => load({ silent: true }))
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onGlobalKeydown)
@@ -358,7 +361,7 @@ async function submitQuote() {
               type="button"
               class="shrink-0 self-start rounded-md border border-slate-300 bg-white px-2.5 py-1 text-sm font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-50 sm:self-auto"
               :disabled="loading"
-              @click="load"
+              @click="() => void load()"
             >
               Tentar novamente
             </button>
