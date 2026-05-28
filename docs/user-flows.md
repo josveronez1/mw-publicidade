@@ -12,6 +12,11 @@
 1. `/login` → e-mail/senha (Supabase Auth).
 2. Perfil com `role` in (`admin`, `super_admin`) acessa `/admin` e sidebar.
 
+## Admin — solicitações (Media Kit)
+
+1. `/admin/solicitacoes` — lista de `quote_requests` enviados pelo formulário do Media Kit (nome, e-mail, telefone, empresa, mensagem, painéis de interesse).
+2. Itens ainda **não abertos** (`read_at` nulo) aparecem com destaque e contam para o indicador do menu; ao expandir a linha, o admin grava `read_at` e o item deixa de ser “novo”.
+
 ## Admin — painéis
 
 1. CRUD em `/admin/panels`; marcar **Publicar** para aparecer no Media Kit.
@@ -28,9 +33,10 @@
 
 ## Admin — contratos (registo anexado ao cliente)
 
-1. Criar rascunho a partir da ficha do cliente: vigência, painéis e `slots_used` por painel em `contract_panels`.
-2. Número gerado por `next_contract_number()`.
-3. **Ativar + cobrança (stub):** passa contrato para `active`, chama `PaymentGatewayStub`, grava `gateway_charges` (Fase 5: Mercado Pago) — quando a lista global de contratos estiver ligada na UI.
+1. **Modelos (`/admin/contracts`):** defina texto (Markdown), placeholders `{{chave}}`, logo opcional (Storage `contract-templates`) e lista lateral de variáveis ligadas aos campos de `clients`. **Registos de contratos efectivos:** `/admin/contracts/registros`.
+2. Criar rascunho a partir da ficha do cliente: escolha o modelo acima; pré-visualização usa dados do cadastro; vigência e painéis em `contract_panels`.
+3. Número gerado por `next_contract_number()`.
+4. **Ativar + cobrança:** por defeito Mercado Pago Checkout Pro (Edge cria preferência, `gateway_charges` pendente com link); com `VITE_PAYMENT_GATEWAY=stub`, fluxo local sem MP (`PaymentGatewayStub`).
 
 ## Estados do contrato (enum)
 

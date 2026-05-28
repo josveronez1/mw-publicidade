@@ -8,13 +8,19 @@ Ordem em `supabase/migrations/`:
 2. `20250407120100_contract_number_fn.sql` — `next_contract_number()`.
 3. `20260409120000_client_panels.sql` — tabela N:N `client_panels` (cadastro de cliente ↔ painéis), política só admin.
 4. `20260422120000_panel_slots_used_public_crm.sql` — redefine `panel_slots_used_public`: soma slots de **contratos ativos** na vigência **mais** vínculos `client_panels` cujo par cliente+painel **não** está já coberto por contrato ativo (evita duplicar CRM com regulamento legal na mesma linha).
+5. `20260409140000_quote_requests_read_at.sql` — `quote_requests.read_at` (null = ainda não vista no admin; preenchida ao abrir/expandir a linha em `/admin/solicitacoes`).
+6. `20260422140000_postgrest_reload_schema.sql` — `NOTIFY pgrst, 'reload schema'` para o PostgREST atualizar o cache de schema (útil se algum cliente ainda vísse a coluna antiga após o passo 5).
+7. `20260422150000_contracts_template_on_delete_set_null.sql` — FK `contracts.template_id` → `contract_templates`: `ON DELETE SET NULL` (eliminar modelo não bloqueia; contratos antigos ficam sem `template_id`).
+8. `20260422160000_storage_create_contract_pdfs_bucket.sql` — cria o bucket Storage `contract-pdfs` (evita «Bucket not found» ao gerar PDF).
+
+**Ordem de migrations no remoto:** se o CLI avisar que existe migration local *anterior* à última já aplicada (timestamp mais antigo que outra no servidor), use `supabase db push --include-all` uma vez, ou crie novas migrations sempre com data/hora **à frente** da última do projeto.
 
 ## Tabelas principais
 
 - `clients`, `profiles` (FK `auth.users`), `panels`, `site_settings` (dados legados; o app não expõe mais tela admin para editar `org_display_name`)
 - `client_panels` — N:N `clients` ↔ `panels` (cadastro comercial no admin; alimenta o mapa público em conjunto com `contract_panels` — ver `panel_slots_used_public`)
-- `contract_templates`, `contracts`, `contract_panels`
-- `quote_requests`, `creative_assets`, `gateway_charges`
+- `contract_templates`, `contracts` (`template_id` opcional; ao apagar modelo referenciado, SQL com `ON DELETE SET NULL` mantém o contrato sem modelo), `contract_panels`
+- `quote_requests` (coluna opcional `read_at` — leitura no admin), `creative_assets`, `gateway_charges`
 - `contract_number_seq` — sequência por ano para `MW-AAAA-NNNN`
 
 ## RLS (resumo)
@@ -34,12 +40,13 @@ Funções `SECURITY DEFINER`: `is_admin()`, `is_client_of(uuid)`, `panel_slots_u
 
 Usada pelo Media Kit (anon). Retorna número inteiro de **vagas ocupadas** exibidas: (1) soma de `contract_panels.slots_used` em contratos `active` com data corrente entre início e fim de vigência; (2) **+** uma unidade por linha em `client_panels` para aquele painel quando o mesmo par (`client_id`, `panel_id`) **não** tem cobertura em (1). O gerador de PDF / templates **não** altera esta função.
 
-## Storage (a criar no painel Supabase)
+## Storage (parcialmente via migration)
 
 Buckets sugeridos:
 
 - `panel-media` — fotos dos painéis (público leitura para paths referenciados em painéis publicados).
-- `contracts-pdf` — PDFs gerados (privado; URLs assinadas ou via RLS storage policies).
+- `contract-pdfs` — opcional / legacy (`contracts.pdf_storage_path` já pode ficar vazio); migrações mantêm bucket por segurança se já houvesse ficheiros antigos.
+- `contract-templates` — logos por modelo de contrato (`contract_templates.logo_storage_path`); admin.
 - `creative-assets` — mídias do cliente.
 
 Políticas de storage devem espelhar RLS das tabelas.

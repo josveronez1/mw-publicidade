@@ -83,11 +83,11 @@ Arquivo vivo: **atualize os status** ao concluir itens. Baseado em `docs/user-fl
 | ----- | ----------------------------------------------------------- | ------ | -------------------------------------------------------- |
 | F3-01 | Formulário “Solicitar proposta” + insert `quote_requests`   | 🟨     | Funciona se RLS/env OK; honeypot ajustado                |
 | F3-02 | Lista de propostas no admin (`/admin/quotes`)               | 🟨     | Leitura; workflow status limitado                        |
-| F3-03 | CRUD / lista `contract_templates`                           | 🟨     | `TemplatesListView` básico                               |
-| F3-04 | Novo contrato: vigência, `contract_panels` (só a partir da ficha) | 🟨     | `ContractFormView` em `/clients/:id/contracts/new`         |
+| F3-03 | Modelos `contract_templates` (+ logo Storage)             | ✅     | `ContractTemplatesView` em `/admin/contracts`; legado `TemplatesListView`; pick + pré-visualização em `ContractFormView` |
+| F3-04 | Novo contrato: vigência, `contract_panels` (só a partir da ficha) | ✅     | `ContractFormView` (+ edição `/contracts/:cid/edit`; `ContractDetailView`; `template_id` opcional) |
 | F3-05 | Número de contrato (`next_contract_number`)                 | ✅      | Migration `20250407120100_*`                             |
-| F3-06 | Lista contratos admin + ações (ativar, stub gateway)        | 🟨     | `ContractsListView`                                      |
-| F3-07 | Geração/deploy PDF real (Edge Function + Storage)           | ⬜      | Esqueleto em `supabase/functions/generate-contract-pdf/` |
+| F3-06 | Lista registos contratos + ativar                           | ✅     | `/admin/contracts/registros` + `activateContractWithGateway` (MP ou stub); número linka ao detalhe                         |
+| F3-07 | Exportar contrato como PDF                                   | ✅     | Descarregar ficheiro no cliente com `jspdf` puro (texto vetorial, sem snapshot DOM); sem Storage nem cabeçalhos do diálogo de impressão. Edge stub continua para futuro (`contract-pdf-browser-vs-edge.md`). |
 | F3-08 | Dashboard admin com contagens                               | 🟨     | `AdminDashboardView` (counts)                            |
 
 
@@ -115,9 +115,9 @@ Decisão de produto: **o anunciante não tem área logada**. Contratos, proposta
 
 | ID    | Item                                                                      | Status | Notas                  |
 | ----- | ------------------------------------------------------------------------- | ------ | ---------------------- |
-| F5-01 | Porta abstraída `PaymentGatewayPort` + stub                               | 🟨     | Domínio/infra parcial  |
-| F5-02 | Implementação Mercado Pago (ou outro) conforme `integracao-pagamentos.md` | ⬜      |                        |
-| F5-03 | Webhooks + reconciliação + `gateway_charges`                              | ⬜      |                        |
+| F5-01 | Porta abstraída `PaymentGatewayPort` + stub                               | ✅     | `MercadoPagoGateway` + `VITE_PAYMENT_GATEWAY=stub`       |
+| F5-02 | Implementação Mercado Pago (ou outro) conforme `integracao-pagamentos.md` | ✅     | Edge `mercadopago-create-preference`, admin `/pagamentos` |
+| F5-03 | Webhooks + reconciliação + `gateway_charges`                              | ✅     | Edge `mercadopago-webhook`, idempotência pagamento MP    |
 | F5-04 | Cancelamento / semáforo de cobrança                                       | ⬜      | Documentado em `docs/` |
 
 
